@@ -1,0 +1,24 @@
+#ifndef _NEO_ITK_JNI_COMMON_
+#define _NEO_ITK_JNI_COMMON_
+
+#include <iostream>
+#include <vector>
+#include <jni.h>
+
+using namespace std;
+
+int * ConvertJIntArrayToIntPointer(JNIEnv * env, jintArray jArray);
+unsigned int * ConvertJIntArrayToUnsignedIntPointer(JNIEnv * env, jintArray jArray);
+float * ConvertJFloatArrayToFloatPointer(JNIEnv * env, jfloatArray jArray);
+double * ConvertJDoubleArrayToDoublePointer(JNIEnv * env, jdoubleArray jArray);
+std::vector<float> ConvertJFloatArrayToFloatVector(JNIEnv * env, jfloatArray jArray);
+std::vector<double> ConvertJDoubleArrayToDoubleVector(JNIEnv * env, jdoubleArray jArray);
+std::string ConvertJStringToString(JNIEnv * env, jstring jContourId);
+jfloatArray ConvertFloatPointerToJFloatArray(JNIEnv * env, float * pointer, unsigned int length);
+jfloatArray ConvertFloatVectorToJFloatArray(JNIEnv * env, std::vector<float> vector);
+jdoubleArray ConvertDoublePointerToJDoubleArray(JNIEnv * env, double * pointer, unsigned int length);
+jdoubleArray ConvertDoubleVectorToJDoubleArray(JNIEnv * env, std::vector<double> vector);
+void copyFloatVectorToJFloatArray(JNIEnv * env, jfloatArray jArray, std::vector<float> vector);
+void copyDoubleVectorToJDoubleArray(JNIEnv * env, jdoubleArray jArray, std::vector<double> vector);
+
+#endif _NEO_ITK_JNI_COMMON_

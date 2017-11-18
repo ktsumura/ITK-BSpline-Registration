@@ -1,0 +1,3 @@
+#pragma once
+
+double* ImageRegistrationMethodBSpline(float *fixedImage, float *movingImage, int * imageDim);

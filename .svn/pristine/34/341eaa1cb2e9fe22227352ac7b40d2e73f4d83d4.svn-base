@@ -1,0 +1,44 @@
+#pragma once
+
+#include "itkBSplineBaseTransform.h"
+#include "itkBSplineInterpolateImageFunction.h"
+#include "itkSingleValuedCostFunction.h"
+#include "itkGradientRecursiveGaussianImageFilter.h"
+#include "itkSpatialObject.h"
+#include "itkCentralDifferenceImageFunction.h"
+#include "itkImageToImageMetric.h"
+#include "itkPoint.h"
+
+using namespace itk;
+
+namespace neo
+{
+	/** \class ImageToImageMetric
+	* \brief Computes similarity between regions of two images.
+	*
+	* This Class is templated over the type of the two input images.
+	* It expects a Transform and an Interpolator to be plugged in.
+	* This particular class is the base class for a hierarchy of
+	* similarity metrics.
+	*
+	* This class computes a value that measures the similarity
+	* between the Fixed image and the transformed Moving image.
+	* The Interpolator is used to compute intensity values on
+	* non-grid positions resulting from mapping points through
+	* the Transform.
+	*
+	*
+	* \ingroup RegistrationMetrics
+	*
+	* \ingroup ITKRegistrationCommon
+	*/
+
+	template< typename TFixedImage, typename TMovingImage >
+	class ITK_TEMPLATE_EXPORT NormalizedCorrelationAndDiceIndexMetric :
+		public SingleValuedCostFunction
+	{
+
+	protected:
+		NormalizedCorrelationAndDiceIndexMetric();
+	};
+}

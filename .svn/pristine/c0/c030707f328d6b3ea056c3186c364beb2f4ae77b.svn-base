@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 2.8)
+
+project(NeoItkJni)
+
+# Here add project names
+add_subdirectory(NeoItkExtension)
+add_subdirectory(NeoItkJniCommon)
+add_subdirectory(FxnStrainRegistration)

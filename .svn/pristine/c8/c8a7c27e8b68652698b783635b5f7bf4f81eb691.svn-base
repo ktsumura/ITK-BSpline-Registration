@@ -1,0 +1,463 @@
+#ifdef REGISTRATION_V3
+
+#include "BSplineImageRegistration.h"
+
+using namespace itk;
+
+namespace neo
+{
+	BSplineImageRegistration::BSplineImageRegistration()
+	{
+		m_FixedArray = ITK_NULLPTR;
+		m_MovingArray = ITK_NULLPTR;
+
+		for (int i = 0; i < ImageDimension; i++) {
+			m_ImageDim[i] = 0;
+			m_Origin[i] = 0.0;
+			m_PixelSpacing[i] = 1.0;
+		}
+
+		m_FixedImage = ITK_NULLPTR;
+		m_MovingImage = ITK_NULLPTR;
+		m_Metric = ITK_NULLPTR;
+		m_Transform = ITK_NULLPTR;
+		m_Optimizer = ITK_NULLPTR;
+		m_Interpolator = ITK_NULLPTR;
+		m_Registration = ITK_NULLPTR;
+	}
+
+	BSplineImageRegistration::BSplineImageRegistration(PixelType *fixedArray, PixelType *movingArray, unsigned int* imageDim) {
+		m_FixedArray = fixedArray;
+		m_MovingArray = movingArray;
+
+		for (int i = 0; i < ImageDimension; i++) {
+			m_ImageDim[i] = imageDim[i];
+			m_Origin[i] = 0.0;
+			m_PixelSpacing[i] = 1.0;
+		}
+
+		m_FixedImage = ITK_NULLPTR;
+		m_MovingImage = ITK_NULLPTR;
+		m_Metric = ITK_NULLPTR;
+		m_Transform = ITK_NULLPTR;
+		m_Optimizer = ITK_NULLPTR;
+		m_Interpolator = ITK_NULLPTR;
+		m_Registration = ITK_NULLPTR;
+	}
+
+	BSplineImageRegistration::BSplineImageRegistration(unsigned int* imageDim) {
+
+		for (int i = 0; i < ImageDimension; i++) {
+			m_ImageDim[i] = imageDim[i];
+			m_Origin[i] = 0.0;
+			m_PixelSpacing[i] = 1.0;
+		}
+
+		m_FixedImage = ITK_NULLPTR;
+		m_MovingImage = ITK_NULLPTR;
+		m_Metric = ITK_NULLPTR;
+		m_Transform = ITK_NULLPTR;
+		m_Optimizer = ITK_NULLPTR;
+		m_Interpolator = ITK_NULLPTR;
+		m_Registration = ITK_NULLPTR;
+	}
+
+	BSplineImageRegistration::~BSplineImageRegistration()
+	{
+		m_FixedArray = ITK_NULLPTR;
+		m_MovingArray = ITK_NULLPTR;
+		//delete[] m_ImageDim;
+		//delete[] m_Origin;
+		//delete[] m_PixelSpacing;
+
+		m_FixedImage = ITK_NULLPTR;
+		m_MovingImage = ITK_NULLPTR;
+		m_Metric = ITK_NULLPTR;
+		m_Transform = ITK_NULLPTR;
+		m_Optimizer = ITK_NULLPTR;
+		m_Interpolator = ITK_NULLPTR;
+		m_Registration = ITK_NULLPTR;
+	}
+
+	TransformType::OriginType BSplineImageRegistration::GetTransformDomainOrigin() {
+		return m_Transform->GetTransformDomainOrigin();
+	}
+
+	void BSplineImageRegistration::SetTransformDomainOrigin(TransformType::OriginType origin) {
+		m_Transform->SetTransformDomainOrigin(origin);
+	}
+
+	TransformType::PhysicalDimensionsType BSplineImageRegistration::GetTransformDomainPhysicalDimensions() {
+		return  m_Transform->GetTransformDomainPhysicalDimensions();
+	}
+
+	void BSplineImageRegistration::SetTransformDomainPhysicalDimensions(const TransformType::PhysicalDimensionsType & physicalDimensions) {
+		m_Transform->SetTransformDomainPhysicalDimensions(physicalDimensions);
+	}
+
+	TransformType::MeshSizeType BSplineImageRegistration::GetTransformDomainMeshSize() {
+		return m_Transform->GetTransformDomainMeshSize();
+	}
+
+	void BSplineImageRegistration::SetTransformDomainMeshSize(TransformType::MeshSizeType meshSize) {
+		m_Transform->SetTransformDomainMeshSize(meshSize);
+	}
+
+	TransformType::DirectionType BSplineImageRegistration::GetTransformDomainDirection() {
+		return m_Transform->GetTransformDomainDirection();
+	}
+
+	void BSplineImageRegistration::SetTransformDomainDirection(TransformType::DirectionType direction) {
+		m_Transform->SetTransformDomainDirection(direction);
+	}
+
+	unsigned int BSplineImageRegistration::GetNumberOfParameters() {
+		return m_Transform->GetNumberOfParameters();
+	}
+
+	void BSplineImageRegistration::SetNumberOfParameters() {
+		// Not used
+	}
+
+	OptimizerType::ParametersType BSplineImageRegistration::GetParameters() {
+		return m_Transform->GetParameters();
+	}
+	
+	CoordinateRepType* BSplineImageRegistration::GetParametersInDouble() {
+		TransformType::ParametersType parameters = m_Transform->GetParameters();
+		unsigned int numElements = parameters.GetNumberOfElements();
+
+		CoordinateRepType* parameterArray = new CoordinateRepType[numElements];
+		for (unsigned int index = 0; index < numElements; index++) {
+			parameterArray[index] = parameters.GetElement(index);
+		}
+
+		return parameterArray;
+	}
+
+	std::vector<CoordinateRepType> BSplineImageRegistration::GetParameterVector() {
+		TransformType::ParametersType parameters = m_Transform->GetParameters();
+		unsigned int numElements = parameters.GetNumberOfElements();
+
+		std::vector<CoordinateRepType> parameterVector;
+		for (unsigned int index = 0; index < numElements; index++) {
+			parameterVector.push_back(parameters.GetElement(index));
+		}
+
+		return parameterVector;
+	}
+
+	void BSplineImageRegistration::SetParameters(OptimizerType::ParametersType parameters) {
+		m_Transform->SetParameters(parameters);
+	}
+
+	void BSplineImageRegistration::SetParameters(std::vector<CoordinateRepType> parameterVector) {
+
+		const unsigned int numberOfParameters = parameterVector.size();
+		m_Parameters.SetSize(numberOfParameters);
+		m_Parameters.Fill(0.0);
+
+		std::vector<CoordinateRepType>::iterator iter;
+		unsigned int index = 0;
+
+		for (iter = parameterVector.begin(); iter != parameterVector.end(); iter++) {
+			m_Parameters.SetElement(index, *iter);
+			index++;
+		}
+	}
+
+	void BSplineImageRegistration::AddFixedContour(std::string contourId, std::vector<CoordinateRepType> fixedContourX, std::vector<CoordinateRepType> fixedContuorY) {
+		m_FixedContourX[contourId] = fixedContourX;
+		m_FixedContourY[contourId] = fixedContuorY;
+	}
+
+	void BSplineImageRegistration::AddMovingContour(std::string contourId, std::vector<CoordinateRepType> movingContourX, std::vector<CoordinateRepType> movingContuorY) {
+		m_MovingContourX[contourId] = movingContourX;
+		m_MovingContourY[contourId] = movingContuorY;
+	}
+
+	void BSplineImageRegistration::SetNumberOfGridNodesInOneDimension(unsigned int numberOfGridNodesInOneDimension) {
+		m_NumberOfGridNodesInOneDimension = numberOfGridNodesInOneDimension;
+	}
+
+	void BSplineImageRegistration::SetOrigin(std::vector<itk::SpacePrecisionType> originVector) {
+
+		std::vector<SpacePrecisionType>::iterator iter;
+		unsigned int index = 0;
+		for (iter = originVector.begin(); iter != originVector.end(); iter++) {
+			m_Origin[index] = *iter;
+			index++;
+		}
+	}
+
+	void BSplineImageRegistration::SetPixelSpacing(std::vector<itk::SpacePrecisionType> pixelSpacingVector) {
+
+		std::vector<SpacePrecisionType>::iterator iter;
+		unsigned int index = 0;
+		for (iter = pixelSpacingVector.begin(); iter != pixelSpacingVector.end(); iter++) {
+			m_PixelSpacing[index] = *iter;
+			index++;
+		}
+	}
+
+	void BSplineImageRegistration::Register() {
+		
+		// Create the synthetic images
+		m_FixedImage = CreateImage(m_FixedArray);
+		m_MovingImage = CreateImage(m_MovingArray);
+
+		// Build metric
+		BuildMetric();
+
+		// Build optimizer
+		BuildOptimizer();
+
+		// Build transform
+		BuildTransform();
+
+		// Build interpolator
+		BuildInterpolator();
+
+		// Build registration
+		BuildRegistration();
+
+		//std::cout << "Intial Parameters = " << std::endl;
+		//std::cout << m_Transform->GetParameters() << std::endl;
+		//std::cout << "GetTransformDomainOrigin = " << std::endl;
+		//std::cout << m_Transform->GetTransformDomainOrigin() << std::endl;
+		//std::cout << "GetTransformDomainPhysicalDimensions = " << std::endl;
+		//std::cout << m_Transform->GetTransformDomainPhysicalDimensions() << std::endl;
+		//std::cout << "GetTransformDomainMeshSize = " << std::endl;
+		//std::cout << m_Transform->GetTransformDomainMeshSize() << std::endl;
+		//std::cout << "GetTransformDomainDirections = " << std::endl;
+		//std::cout << m_Transform->GetTransformDomainDirection() << std::endl;
+		//
+		//std::cout << std::endl << "Starting Registration" << std::endl;
+
+		try
+		{
+			m_Registration->Update();
+			//std::cout << "Optimizer stop condition = "
+			//	<< m_Registration->GetOptimizer()->GetStopConditionDescription()
+			//	<< std::endl;
+		}
+		catch (itk::ExceptionObject & err)
+		{
+			std::cerr << "ExceptionObject caught !" << std::endl;
+			std::cerr << err << std::endl;
+			return;
+		}
+
+		OptimizerType::ParametersType finalParameters = m_Registration->GetLastTransformParameters();
+		m_Transform->SetParameters(finalParameters);
+		//std::cout << "Last Transform Parameters" << std::endl;
+		//std::cout << finalParameters << std::endl;
+
+		//// The following is for visualization
+		//
+		//typedef itk::ResampleImageFilter<ImageType, ImageType > ResampleFilterType;
+		//ResampleFilterType::Pointer resample = ResampleFilterType::New();
+
+		//resample->SetTransform(m_Transform);
+		//resample->SetInput(m_MovingImage);
+		//resample->SetSize(m_FixedImage->GetLargestPossibleRegion().GetSize());
+		//resample->SetOutputOrigin(m_FixedImage->GetOrigin());
+		//resample->SetOutputSpacing(m_FixedImage->GetSpacing());
+		//resample->SetOutputDirection(m_FixedImage->GetDirection());
+		//resample->SetDefaultPixelValue(100);
+
+		//typedef  unsigned char  OutputPixelType;
+		//typedef itk::Image< OutputPixelType, ImageDimension > OutputImageType;
+
+		//typedef itk::CastImageFilter<ImageType, OutputImageType > CastFilterType;
+		//CastFilterType::Pointer caster = CastFilterType::New();
+		//caster->SetInput(resample->GetOutput());
+
+		//typedef itk::ImageFileWriter< OutputImageType >  OutputWriterType;
+		//OutputWriterType::Pointer writer = OutputWriterType::New();
+		//writer->SetFileName("output.png");
+		//writer->SetInput(caster->GetOutput());
+
+		//try
+		//{
+		//	writer->Update();
+		//}
+		//catch (itk::ExceptionObject & err)
+		//{
+		//	std::cerr << "ExceptionObject caught !" << std::endl;
+		//	std::cerr << err << std::endl;
+		//	return;
+		//}
+
+		//QuickView viewer;
+		//viewer.AddImage(
+		//	m_FixedImage.GetPointer(), true,
+		//	"Fixed Image");
+		//viewer.AddImage(
+		//	m_MovingImage.GetPointer(), true,
+		//	"Moving Image");
+		//viewer.AddImage(
+		//	resample->GetOutput(), true,
+		//	"Resampled Moving Image");
+
+		//viewer.Visualize();
+	}
+
+	ImageType::Pointer BSplineImageRegistration::CreateImage(PixelType *fImage) {
+		typedef itk::ImportImageFilter< PixelType, ImageDimension >  ImportFilterType;
+		ImportFilterType::Pointer importFilter = ImportFilterType::New();
+
+		// Note imageDim is in the order of row-col
+		ImportFilterType::SizeType  size;
+		size[0] = m_ImageDim[0];  // size along X
+		size[1] = m_ImageDim[1];  // size along Y
+
+		ImportFilterType::IndexType start;
+		start.Fill(0);
+
+		ImportFilterType::RegionType region;
+		region.SetIndex(start);
+		region.SetSize(size);
+
+		importFilter->SetRegion(region);
+		importFilter->SetOrigin(m_Origin);
+		importFilter->SetSpacing(m_PixelSpacing);
+		
+		const itk::SizeValueType imageSize = m_ImageDim[0] * m_ImageDim[1];
+
+		const bool importImageFilterWillOwnTheBuffer = true;
+		importFilter->SetImportPointer(fImage, imageSize, importImageFilterWillOwnTheBuffer);
+		importFilter->Update();
+
+		ImageType::Pointer  image = ImageType::New();
+		image->Graft(importFilter->GetOutput());
+
+		return image;
+	}
+
+	void BSplineImageRegistration::TransformPoints(std::vector<CoordinateRepType>& inPointsX, std::vector<CoordinateRepType>& inPointsY, std::vector<CoordinateRepType>& outPointsX, std::vector<CoordinateRepType>& outPointsY) {
+		TransformType::InputPointType inputPoint;
+		TransformType::OutputPointType outputPoint;
+
+		TransformType::ParametersType parameters;
+
+		std::vector<CoordinateRepType>::iterator iterX;
+		std::vector<CoordinateRepType>::iterator iterY;
+		
+		// Build transform
+		BuildTransform();
+
+		// Transform 
+		for (iterX = inPointsX.begin(), iterY = inPointsY.begin(); iterX != inPointsX.end() && iterY != inPointsY.end(); iterX++, iterY++) {
+			inputPoint[0] = *iterX;
+			inputPoint[1] = *iterY;
+
+			outputPoint = m_Transform->TransformPoint(inputPoint);
+
+			outPointsX.push_back(outputPoint[0]);
+			outPointsY.push_back(outputPoint[1]);
+		}
+	}
+
+	void BSplineImageRegistration::BuildMetric() {
+		m_Metric = MetricType::New();
+	}
+
+	void BSplineImageRegistration::BuildTransform() {
+		m_Transform = TransformType::New();
+
+		//  Here we define the parameters of the BSplineDeformableTransform grid.  We
+		//  arbitrarily decide to use a grid with $5 \times 5$ nodes within the image.
+		//  The reader should note that the BSpline computation requires a
+		//  finite support region ( 1 grid node at the lower borders and 2
+		//  grid nodes at upper borders). Therefore in this example, we set
+		//  the grid size to be $8 \times 8$ and place the grid origin such that
+		//  grid node (1,1) coincides with the first pixel in the fixed image.
+		TransformType::PhysicalDimensionsType   fixedPhysicalDimensions;
+		//for (unsigned int i = 0; i < ImageDimension; i++)
+		//{
+		//	fixedPhysicalDimensions[i] = m_FixedImage->GetSpacing()[i] *
+		//		static_cast<CoordinateRepType>(
+		//			m_FixedImage->GetLargestPossibleRegion().GetSize()[i] - 1);
+		//	std::cout << "Size" << std::endl;
+		//	std::cout << m_FixedImage->GetLargestPossibleRegion().GetSize()[i] << std::endl;
+		//}
+		for (unsigned int i = 0; i < ImageDimension; i++)
+		{
+			fixedPhysicalDimensions[i] = m_PixelSpacing[i] * static_cast<CoordinateRepType>(m_ImageDim[i] - 1);
+		}
+
+		TransformType::MeshSizeType             meshSize;
+		meshSize.Fill(m_NumberOfGridNodesInOneDimension - SplineOrder);
+
+		m_Transform->SetTransformDomainOrigin(m_Origin);
+		m_Transform->SetTransformDomainPhysicalDimensions(fixedPhysicalDimensions);
+		m_Transform->SetTransformDomainMeshSize(meshSize);
+
+		// Get the number of parameters
+		const unsigned int numberOfParameters = m_Transform->GetNumberOfParameters();
+		unsigned int numberOfElements = m_Parameters.GetNumberOfElements();
+
+		if (numberOfElements != numberOfParameters) {
+			// Initialize transform parameters
+			//typedef TransformType::ParametersType     ParametersType;
+			//ParametersType parameters(numberOfParameters);
+			m_Parameters.SetSize(numberOfParameters);
+			m_Parameters.Fill(0.0);
+		}
+		
+		// Set transform parameters
+		m_Transform->SetParameters(m_Parameters);
+	}
+
+	void BSplineImageRegistration::BuildOptimizer() {
+		////// LBFGS Optimizer.
+		//typedef itk::LBFGSOptimizer       OptimizerType;
+		//OptimizerType::Pointer      optimizer     = OptimizerType::New();
+		//optimizer->SetGradientConvergenceTolerance(0.05);
+		//optimizer->SetLineSearchAccuracy(0.9);
+		//optimizer->SetDefaultStepLength(.5);
+		//optimizer->TraceOn();
+		//optimizer->SetMaximumNumberOfFunctionEvaluations(1000);
+
+		// REGULAR STEP GRADIENT DESCENT
+		m_Optimizer = OptimizerType::New();
+		m_Optimizer->SetMaximumStepLength(10.0);
+		m_Optimizer->SetMinimumStepLength(0.01);
+		m_Optimizer->SetRelaxationFactor(0.7);
+		m_Optimizer->SetNumberOfIterations(100);// original 200
+		m_Optimizer->SetGradientMagnitudeTolerance(1e-4);
+		// Create the Command observer and register it with the optimizer.
+		//CommandIterationUpdate::Pointer observer = CommandIterationUpdate::New();
+		//m_Optimizer->AddObserver(itk::IterationEvent(), observer);
+	}
+
+	void BSplineImageRegistration::BuildInterpolator() {
+		m_Interpolator = InterpolatorType::New();
+	}
+
+	void BSplineImageRegistration::BuildRegistration() {
+		m_Registration = RegistrationType::New();
+
+		// The old registration framework has problems with multi-threading
+		// For now, we set the number of threads to 1
+		m_Registration->SetNumberOfThreads(1);
+		
+		m_Registration->SetMetric(m_Metric);
+		m_Registration->SetOptimizer(m_Optimizer);
+		m_Registration->SetInterpolator(m_Interpolator);
+		m_Registration->SetTransform(m_Transform);
+		
+		m_Registration->SetFixedImage(m_FixedImage);
+		m_Registration->SetMovingImage(m_MovingImage);
+
+		ImageType::RegionType fixedRegion = m_FixedImage->GetBufferedRegion();
+		m_Registration->SetFixedImageRegion(fixedRegion);
+
+		//  We now pass the parameters of the current transform as the initial
+		//  parameters to be used when the registration process starts.
+		m_Registration->SetInitialTransformParameters(m_Transform->GetParameters());
+	}
+}
+
+#endif REGISTRATION_V3

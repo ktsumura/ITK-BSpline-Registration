@@ -1,0 +1,27 @@
+file(GLOB_RECURSE srcs ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cxx)
+file(GLOB_RECURSE incs ${CMAKE_CURRENT_SOURCE_DIR}/include/*.hxx ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h)
+set(NEO_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
+set(JAVA_INCLUDE_DIRS "C:/Program\ Files/Java/jdk1.8.0_102/include" "C:/Program\ Files/Java/jdk1.8.0_102/include/win32")
+set(NEO_ITK_JNI_PROJ_NAME NeoItkJni)
+
+cmake_minimum_required(VERSION 2.8)
+ 
+project(${NEO_ITK_JNI_PROJ_NAME})
+ 
+find_package(ITK REQUIRED)
+include(${ITK_USE_FILE})
+if (ITKVtkGlue_LOADED)
+  find_package(VTK REQUIRED)
+  include(${VTK_USE_FILE})
+else()
+  find_package(ItkVtkGlue REQUIRED)
+  include(${ItkVtkGlue_USE_FILE})
+  set(Glue ItkVtkGlue)
+endif()
+ 
+add_library(${NEO_ITK_JNI_PROJ_NAME} SHARED ${srcs} ${incs})
+target_link_libraries(${NEO_ITK_JNI_PROJ_NAME}
+  ${Glue}  ${VTK_LIBRARIES} ${ITK_LIBRARIES})
+
+ # Properties-&gt;C/C++-&gt;General-&gt;Additional Include Directories
+include_directories(${NEO_INCLUDE_DIR} ${JAVA_INCLUDE_DIRS})

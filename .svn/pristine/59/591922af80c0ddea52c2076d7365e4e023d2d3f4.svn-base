@@ -1,0 +1,350 @@
+#include <iostream>
+
+#include "NeoItkJni.h"
+#include "NeoHandle.h"
+#include "ImageRegistrationMethodBSpline.h"
+#include "BSplineImageRegistration.h"
+
+using namespace std;
+using namespace neo;
+
+int * ConvertJIntArrayToIntPointer(JNIEnv * env, jintArray jIntArray);
+float * ConvertJFloatArrayToFloatPointer(JNIEnv * env, jfloatArray jFloatArray);
+double * ConvertJDoubleArrayToDoublePointer(JNIEnv * env, jdoubleArray jDoubleArray);
+std::vector<float> ConvertJFloatArrayToFloatVector(JNIEnv * env, jfloatArray jFloatArray);
+std::vector<double> ConvertJDoubleArrayToDoubleVector(JNIEnv * env, jdoubleArray jDoubleArray);
+std::string ConvertJStringToString(JNIEnv * env, jstring jContourId);
+jfloatArray ConvertFloatPointerToJFloatArray(JNIEnv * env, float * floatPtr, unsigned int length);
+jfloatArray ConvertFloatVectorToJFloatArray(JNIEnv * env, std::vector<float> floatVector);
+jdoubleArray ConvertDoublePointerToJDoubleArray(JNIEnv * env, double * doublePtr, unsigned int length);
+jdoubleArray ConvertDoubleVectorToJDoubleArray(JNIEnv * env, std::vector<double> doubleVector);
+void copyFloatVectorToJFloatArray(JNIEnv * env, jfloatArray jFloatArray, std::vector<float> floatVector);
+
+JNIEXPORT void JNICALL Java_com_neosoft_application_analysis_function_strainanalysis_engine_NeoItkJniWrapper_sayHello
+(JNIEnv *, jobject) {
+	cout << "!!!Hello World!!!" << endl;
+}
+
+/*
+* Class:     com_neosoft_application_analysis_function_strainanalysis_engine_NeoItkJniWrapper
+* Method:    initialize
+* Signature: ()V
+*/
+JNIEXPORT void JNICALL Java_com_neosoft_application_analysis_function_strainanalysis_engine_NeoItkJniWrapper_initialize__
+(JNIEnv *env, jobject thisObj) {
+	// Create a registration object
+	BSplineImageRegistration *registration = new BSplineImageRegistration();
+
+	// Stow the registration object pointer back to the JAVA wrapper object...
+	setHandle(env, thisObj, registration);
+}
+
+/*
+* Class:     com_neosoft_application_analysis_function_strainanalysis_engine_NeoItkJniWrapper
+* Method:    initialize
+* Signature: ([F[F[I)V
+*/
+JNIEXPORT void JNICALL Java_com_neosoft_application_analysis_function_strainanalysis_engine_NeoItkJniWrapper_initialize___3F_3F_3I
+(JNIEnv *env, jobject thisObj, jfloatArray jFixedImage, jfloatArray jMovingImage, jintArray jImageDim) {
+
+	// Convert to C++ pointers
+	float *fixedImage = ConvertJFloatArrayToFloatPointer(env, jFixedImage);
+	float *movingImage = ConvertJFloatArrayToFloatPointer(env, jMovingImage);
+	int *imageDim = ConvertJIntArrayToIntPointer(env, jImageDim);
+
+	// Create a registration object
+	BSplineImageRegistration *registration = new BSplineImageRegistration(fixedImage, movingImage, imageDim);
+
+	// Stow the registration object pointer back to the JAVA wrapper object...
+	setHandle(env, thisObj, registration);
+}
+
+/*
+* Class:     com_neosoft_application_analysis_function_strainanalysis_engine_NeoItkJniWrapper
+* Method:    addFixedContour
+* Signature: (Ljava/lang/String;[F[F)V
+*/
+JNIEXPORT void JNICALL Java_com_neosoft_application_analysis_function_strainanalysis_engine_NeoItkJniWrapper_addFixedContour
+(JNIEnv *env, jobject thisObj, jstring jContourId, jfloatArray jFixedContourX, jfloatArray jFixedContuorY) {
+
+	// Convert to C++ pointers
+	std::string contourId = ConvertJStringToString(env, jContourId);
+	std::vector<float> fixedContourX = ConvertJFloatArrayToFloatVector(env, jFixedContourX);
+	std::vector<float> fixedContuorY = ConvertJFloatArrayToFloatVector(env, jFixedContuorY);
+
+	// Retrieve the registration instance held by the JAVA side JNI wrapper
+	BSplineImageRegistration *registration = getHandle<BSplineImageRegistration>(env, thisObj);
+	
+	// Add the fixed contour
+	registration->AddFixedContour(contourId, fixedContourX, fixedContuorY);
+}
+
+/*
+* Class:     com_neosoft_application_analysis_function_strainanalysis_engine_NeoItkJniWrapper
+* Method:    addMovingContour
+* Signature: (Ljava/lang/String;[F[F)V
+*/
+JNIEXPORT void JNICALL Java_com_neosoft_application_analysis_function_strainanalysis_engine_NeoItkJniWrapper_addMovingContour
+(JNIEnv *env, jobject thisObj, jstring jContourId, jfloatArray jMovingContourX, jfloatArray jMovingContourY) {
+
+	// Convert to C++ objects
+	std::string contourId = ConvertJStringToString(env, jContourId);
+	std::vector<float> movingContourX = ConvertJFloatArrayToFloatVector(env, jMovingContourX);
+	std::vector<float> movingContourY = ConvertJFloatArrayToFloatVector(env, jMovingContourY);
+
+	// Retrieve the registration instance held by the JAVA side JNI wrapper
+	BSplineImageRegistration *registration = getHandle<BSplineImageRegistration>(env, thisObj);
+
+	// Add the moving contour
+	registration->AddMovingContour(contourId, movingContourX, movingContourY);
+}
+
+/*
+* Class:     com_neosoft_application_analysis_function_strainanalysis_engine_NeoItkJniWrapper
+* Method:    register
+* Signature: ()V
+*/
+JNIEXPORT void JNICALL Java_com_neosoft_application_analysis_function_strainanalysis_engine_NeoItkJniWrapper_register
+(JNIEnv *env, jobject thisObj) {
+
+	// Retrieve the registration instance held by the JAVA side JNI wrapper
+	BSplineImageRegistration *registration = getHandle<BSplineImageRegistration>(env, thisObj);
+
+	// Register
+	registration->Register();
+}
+
+/*
+* Class:     com_neosoft_application_analysis_function_strainanalysis_engine_NeoItkJniWrapper
+* Method:    SetNumberOfGridNodesInOneDimension
+* Signature: (I)V
+*/
+JNIEXPORT void JNICALL Java_com_neosoft_application_analysis_function_strainanalysis_engine_NeoItkJniWrapper_setNumberOfGridNodesInOneDimension
+(JNIEnv *env, jobject thisObj, jint jNumGridNodes) {
+
+	// Convert to C++ objects
+	int numGridNodes = (int)jNumGridNodes;
+
+	// Retrieve the registration instance held by the JAVA side JNI wrapper
+	BSplineImageRegistration *registration = getHandle<BSplineImageRegistration>(env, thisObj);
+
+	// Set the number of grid nodes in on dimension
+	registration->SetNumberOfGridNodesInOneDimension(numGridNodes);
+}
+
+/*
+* Class:     com_neosoft_application_analysis_function_strainanalysis_engine_NeoItkJniWrapper
+* Method:    getParameters
+* Signature: ()[D
+*/
+JNIEXPORT jdoubleArray JNICALL Java_com_neosoft_application_analysis_function_strainanalysis_engine_NeoItkJniWrapper_getParameters
+(JNIEnv *env, jobject thisObj) {
+
+	// Retrieve the registration instance held by the JAVA side JNI wrapper
+	BSplineImageRegistration *registration = getHandle<BSplineImageRegistration>(env, thisObj);
+
+	// Get parameters
+	std::vector<double> parameterVector = registration->GetParameterVector();
+
+	// Convert to Java object
+	jdoubleArray jParameters = ConvertDoubleVectorToJDoubleArray(env, parameterVector);
+
+	return jParameters;
+}
+
+/*
+* Class:     com_neosoft_application_analysis_function_strainanalysis_engine_NeoItkJniWrapper
+* Method:    setParameters
+* Signature: ([D)V
+*/
+JNIEXPORT void JNICALL Java_com_neosoft_application_analysis_function_strainanalysis_engine_NeoItkJniWrapper_setParameters
+(JNIEnv *env, jobject thisObj, jdoubleArray jParameters) {
+
+	// Convert to C++ objects
+	std::vector<double> parameters = ConvertJDoubleArrayToDoubleVector(env, jParameters);
+
+	// Retrieve the registration instance held by the JAVA side JNI wrapper
+	BSplineImageRegistration *registration = getHandle<BSplineImageRegistration>(env, thisObj);
+
+	// Add the fixed contour
+	registration->SetParameters(parameters);
+}
+
+/*
+* Class:     com_neosoft_application_analysis_function_strainanalysis_engine_NeoItkJniWrapper
+* Method:    transformPoints
+* Signature: ([F[F[F[F)V
+*/
+JNIEXPORT void JNICALL Java_com_neosoft_application_analysis_function_strainanalysis_engine_NeoItkJniWrapper_transformPoints
+(JNIEnv *env, jobject thisObj, jfloatArray jInPointsX, jfloatArray jInPointsY, jfloatArray jOutPointsX, jfloatArray jOutPointsY) {
+
+	// Convert to C++ objects
+	std::vector<float> inPointsX = ConvertJFloatArrayToFloatVector(env, jInPointsX);
+	std::vector<float> inPointsY = ConvertJFloatArrayToFloatVector(env, jInPointsY);
+	std::vector<float> outPointsX; 
+	std::vector<float> outPointsY;
+
+	// Retrieve the registration instance held by the JAVA side JNI wrapper
+	BSplineImageRegistration *registration = getHandle<BSplineImageRegistration>(env, thisObj);
+
+	// Transform points
+	registration->TransformPoints(inPointsX, inPointsY, outPointsX, outPointsY);
+
+	// Copy to Java objects
+	copyFloatVectorToJFloatArray(env, jOutPointsX, outPointsX);
+	copyFloatVectorToJFloatArray(env, jOutPointsY, outPointsY);
+}
+
+/*
+* Class:     com_neosoft_application_analysis_function_strainanalysis_engine_NeoItkJniWrapper
+* Method:    disposeJni
+* Signature: ()V
+*/
+JNIEXPORT void JNICALL Java_com_neosoft_application_analysis_function_strainanalysis_engine_NeoItkJniWrapper_disposeJni
+(JNIEnv *env, jobject thisObj) {
+	BSplineImageRegistration *registration = getHandle<BSplineImageRegistration>(env, thisObj);
+	setHandle(env, thisObj, (BSplineImageRegistration*)0);
+	delete registration;
+}
+
+//JNIEXPORT jdoubleArray JNICALL Java_com_neosoft_application_analysis_function_strainanalysis_engine_NeoItkJniWrapper_register___3F_3F_3I
+//(JNIEnv *env, jobject thisObj, jfloatArray jFixedImage, jfloatArray jMovingImage , jintArray jVolumeDim) {
+//	cout << "Java_itk_NeoItkJniWrapper_register 1" << endl;
+//	
+//	// Extract the dimension values for the image and results data...
+//	//size_t volumeDimLength = (size_t)env->GetArrayLength(jVolumeDim);
+//	//jint *jVolumeDimPtr = env->GetIntArrayElements(jVolumeDim, 0);
+//	//int *volumeDim = new int[volumeDimLength];
+//	//memcpy(volumeDim, jVolumeDimPtr, volumeDimLength * sizeof(int));
+//	int *volumeDim = ConvertJIntArrayToIntPointer(env, jVolumeDim);
+//
+//	//// Copy the volume data to the input layer
+//	//size_t fixedImageLength = (size_t)env->GetArrayLength(jFixedImage);
+//	//jfloat *jFixedImagePtr = env->GetFloatArrayElements(jFixedImage, 0);
+//	//cout << "fixedImageLength " << fixedImageLength << endl;
+//	//cout << "Java_itk_NeoItkJniWrapper_register 2" << endl;
+//	//float *fixedImage = new float[fixedImageLength];
+//	//memcpy(fixedImage, jFixedImagePtr, fixedImageLength * sizeof(float));
+//	//cout << "Java_itk_NeoItkJniWrapper_register 3" << endl;
+//	float *fixedImage = ConvertJFloatArrayToFloatPointer(env, jFixedImage);
+//
+//	// Copy the volume data to the input layer
+//	//size_t movingImageLength = (size_t)env->GetArrayLength(jMovingImage);
+//	//jfloat *jMovingImagePtr = env->GetFloatArrayElements(jMovingImage, 0);
+//	//cout << "movingImageLength " << movingImageLength << endl;
+//	//cout << "Java_itk_NeoItkJniWrapper_register 4" << endl;
+//	//float *movingImage = new float[movingImageLength];
+//	//memcpy(movingImage, jMovingImagePtr, movingImageLength * sizeof(float));
+//	//cout << "Java_itk_NeoItkJniWrapper_register 5" << endl;
+//	float *movingImage = ConvertJFloatArrayToFloatPointer(env, jMovingImage);
+//	
+//	// Register
+//	double* parameters = ImageRegistrationMethodBSpline(fixedImage, movingImage, volumeDim);
+//	cout << "Java_itk_NeoItkJniWrapper_register 6" << endl;
+//
+//	// 
+//	jdoubleArray jParameters = env->NewDoubleArray((jsize)(1152));
+//	env->SetDoubleArrayRegion(jParameters, 0, (jsize)(1152), parameters);
+//
+//	return jParameters;
+//}
+
+int * ConvertJIntArrayToIntPointer(JNIEnv * env, jintArray jIntArray) {
+
+	size_t length = (size_t)env->GetArrayLength(jIntArray);
+	jint *jIntPtr = env->GetIntArrayElements(jIntArray, 0);
+	int *intPtr = new int[length];
+	memcpy(intPtr, jIntPtr, length * sizeof(int));
+
+	return intPtr;
+}
+
+float * ConvertJFloatArrayToFloatPointer(JNIEnv * env, jfloatArray jFloatArray) {
+
+	size_t length = (size_t)env->GetArrayLength(jFloatArray);
+	jfloat *jFloatPtr = env->GetFloatArrayElements(jFloatArray, 0);
+	float *floatPtr = new float[length];
+	memcpy(floatPtr, jFloatPtr, length * sizeof(float));
+
+	return floatPtr;
+}
+
+double * ConvertJDoubleArrayToDoublePointer(JNIEnv * env, jdoubleArray jDoubleArray) {
+
+	size_t length = (size_t)env->GetArrayLength(jDoubleArray);
+	jdouble *jDoublePtr = env->GetDoubleArrayElements(jDoubleArray, 0);
+	double *doublePtr = new double[length];
+	memcpy(doublePtr, jDoublePtr, length * sizeof(double));
+
+	return doublePtr;
+}
+
+std::vector<float> ConvertJFloatArrayToFloatVector(JNIEnv * env, jfloatArray jFloatArray) {
+
+	size_t length = (size_t)env->GetArrayLength(jFloatArray);
+	jfloat *jFloatPtr = env->GetFloatArrayElements(jFloatArray, 0);
+	float *floatPtr = new float[length];
+	memcpy(floatPtr, jFloatPtr, length * sizeof(float));
+
+	std::vector<float> floatVector(floatPtr, floatPtr + length);
+
+	return floatVector;
+}
+
+std::vector<double> ConvertJDoubleArrayToDoubleVector(JNIEnv * env, jdoubleArray jDoubleArray) {
+
+	size_t length = (size_t)env->GetArrayLength(jDoubleArray);
+	jdouble *jDoublePtr = env->GetDoubleArrayElements(jDoubleArray, 0);
+	double *doublePtr = new double[length];
+	memcpy(doublePtr, jDoublePtr, length * sizeof(double));
+
+	std::vector<double> doubleVector(doublePtr, doublePtr + length);
+
+	return doubleVector;
+}
+
+std::string ConvertJStringToString(JNIEnv * env, jstring jContourId) {
+	const char *charPtr = env->GetStringUTFChars(jContourId, 0);
+	std::string string(charPtr);
+
+	return string;
+}
+
+jfloatArray ConvertFloatPointerToJFloatArray(JNIEnv * env, float * floatPtr, unsigned int length) {
+
+	jfloatArray jFloatArray = env->NewFloatArray((jsize)(length));
+	env->SetFloatArrayRegion(jFloatArray, 0, (jsize)(length), floatPtr);
+
+	return jFloatArray;
+}
+
+jfloatArray ConvertFloatVectorToJFloatArray(JNIEnv * env, std::vector<float> floatVector) {
+
+	size_t length = floatVector.size();
+	float * floatPtr = &floatVector[0];
+
+	return ConvertFloatPointerToJFloatArray(env, floatPtr, length);
+}
+
+jdoubleArray ConvertDoublePointerToJDoubleArray(JNIEnv * env, double * doublePtr, unsigned int length) {
+
+	jdoubleArray jDoubleArray = env->NewDoubleArray((jsize)(length));
+	env->SetDoubleArrayRegion(jDoubleArray, 0, (jsize)(length), doublePtr);
+
+	return jDoubleArray;
+}
+
+jdoubleArray ConvertDoubleVectorToJDoubleArray(JNIEnv * env, std::vector<double> doubleVector) {
+
+	size_t length = doubleVector.size();
+	double * doublePtr = &doubleVector[0];
+
+	return ConvertDoublePointerToJDoubleArray(env, doublePtr, length);
+}
+
+void copyFloatVectorToJFloatArray(JNIEnv * env, jfloatArray jFloatArray, std::vector<float> floatVector) {
+	size_t length = (size_t)env->GetArrayLength(jFloatArray);
+	float * floatPtr = &floatVector[0];
+
+	env->SetFloatArrayRegion(jFloatArray, 0, (jsize)(length), floatPtr);
+}

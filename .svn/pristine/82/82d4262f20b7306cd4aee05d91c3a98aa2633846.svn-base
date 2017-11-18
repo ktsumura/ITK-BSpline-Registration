@@ -1,0 +1,259 @@
+#ifdef REGISTRATION_V4
+
+#include <iostream>
+
+#include "NeoHandle.h"
+#include "NeoItkJniCommon.h"
+#include "FxnStrainRegistrationJni.h"
+#include "BSplineImageRegistrationV4.h"
+
+using namespace std;
+using namespace neo;
+
+/*
+* Class:     com_neosoft_application_analysis_strain_function_engine_FxnStrainRegistrationJni
+* Method:    sayHello
+* Signature: ()V
+*/
+JNIEXPORT void JNICALL Java_com_neosoft_application_analysis_strain_function_engine_FxnStrainRegistrationJni_sayHello
+(JNIEnv *, jobject) {
+	cout << "!!!Hello World!!!" << endl;
+}
+
+/*
+* Class:     com_neosoft_application_analysis_strain_function_engine_FxnStrainRegistrationJni
+* Method:    initialize
+* Signature: ()V
+*/
+JNIEXPORT void JNICALL Java_com_neosoft_application_analysis_strain_function_engine_FxnStrainRegistrationJni_initialize__
+(JNIEnv *env, jobject thisObj) {
+	// Create a registration object
+	BSplineImageRegistrationV4 *registration = new BSplineImageRegistrationV4();
+
+	// Stow the registration object pointer back to the JAVA wrapper object...
+	setHandle(env, thisObj, registration);
+}
+
+/*
+* Class:     com_neosoft_application_analysis_strain_function_engine_FxnStrainRegistrationJni
+* Method:    initialize
+* Signature: ([F[F[I)V
+*/
+JNIEXPORT void JNICALL Java_com_neosoft_application_analysis_strain_function_engine_FxnStrainRegistrationJni_initialize___3F_3F_3I
+(JNIEnv *env, jobject thisObj, jfloatArray jFixedImage, jfloatArray jMovingImage, jintArray jImageDim) {
+
+	// Convert to C++ pointers
+	float *fixedImage = ConvertJFloatArrayToFloatPointer(env, jFixedImage);
+	float *movingImage = ConvertJFloatArrayToFloatPointer(env, jMovingImage);
+	unsigned int *imageDim = ConvertJIntArrayToUnsignedIntPointer(env, jImageDim);
+
+	// Create a registration object
+	BSplineImageRegistrationV4 *registration = new BSplineImageRegistrationV4(fixedImage, movingImage, imageDim);
+
+	// Stow the registration object pointer back to the JAVA wrapper object...
+	setHandle(env, thisObj, registration);
+}
+
+/*
+* Class:     com_neosoft_application_analysis_strain_function_engine_FxnStrainRegistrationJni
+* Method:    initialize
+* Signature: ([I)V
+*/
+JNIEXPORT void JNICALL Java_com_neosoft_application_analysis_strain_function_engine_FxnStrainRegistrationJni_initialize___3I
+(JNIEnv *env, jobject thisObj, jintArray jImageDim) {
+
+	// Convert to C++ pointers
+	unsigned int *imageDim = ConvertJIntArrayToUnsignedIntPointer(env, jImageDim);
+
+	// Create a registration object
+	BSplineImageRegistrationV4 *registration = new BSplineImageRegistrationV4(imageDim);
+
+	// Stow the registration object pointer back to the JAVA wrapper object...
+	setHandle(env, thisObj, registration);
+}
+
+/*
+* Class:     com_neosoft_application_analysis_strain_function_engine_FxnStrainRegistrationJni
+* Method:    addFixedContour
+* Signature: (Ljava/lang/String;[D[D)V
+*/
+JNIEXPORT void JNICALL Java_com_neosoft_application_analysis_strain_function_engine_FxnStrainRegistrationJni_addFixedContour
+(JNIEnv *env, jobject thisObj, jstring jContourId, jdoubleArray jFixedContourX, jdoubleArray jFixedContuorY) {
+
+	// Convert to C++ pointers
+	std::string contourId = ConvertJStringToString(env, jContourId);
+	std::vector<double> fixedContourX = ConvertJDoubleArrayToDoubleVector(env, jFixedContourX);
+	std::vector<double> fixedContuorY = ConvertJDoubleArrayToDoubleVector(env, jFixedContuorY);
+
+	// Retrieve the registration instance held by the JAVA side JNI wrapper
+	BSplineImageRegistrationV4 *registration = getHandle<BSplineImageRegistrationV4>(env, thisObj);
+
+	// Add the fixed contour
+	registration->AddFixedContour(contourId, fixedContourX, fixedContuorY);
+}
+
+/*
+* Class:     com_neosoft_application_analysis_strain_function_engine_FxnStrainRegistrationJni
+* Method:    addMovingContour
+* Signature: (Ljava/lang/String;[D[D)V
+*/
+JNIEXPORT void JNICALL Java_com_neosoft_application_analysis_strain_function_engine_FxnStrainRegistrationJni_addMovingContour
+(JNIEnv *env, jobject thisObj, jstring jContourId, jdoubleArray jMovingContourX, jdoubleArray jMovingContourY) {
+
+	// Convert to C++ objects
+	std::string contourId = ConvertJStringToString(env, jContourId);
+	std::vector<double> movingContourX = ConvertJDoubleArrayToDoubleVector(env, jMovingContourX);
+	std::vector<double> movingContourY = ConvertJDoubleArrayToDoubleVector(env, jMovingContourY);
+
+	// Retrieve the registration instance held by the JAVA side JNI wrapper
+	BSplineImageRegistrationV4 *registration = getHandle<BSplineImageRegistrationV4>(env, thisObj);
+
+	// Add the moving contour
+	registration->AddMovingContour(contourId, movingContourX, movingContourY);
+}
+
+/*
+* Class:     com_neosoft_application_analysis_strain_function_engine_FxnStrainRegistrationJni
+* Method:    register
+* Signature: ()V
+*/
+JNIEXPORT void JNICALL Java_com_neosoft_application_analysis_strain_function_engine_FxnStrainRegistrationJni_register
+(JNIEnv *env, jobject thisObj) {
+
+	// Retrieve the registration instance held by the JAVA side JNI wrapper
+	BSplineImageRegistrationV4 *registration = getHandle<BSplineImageRegistrationV4>(env, thisObj);
+
+	// Register
+	registration->Register();
+}
+
+/*
+* Class:     com_neosoft_application_analysis_strain_function_engine_FxnStrainRegistrationJni
+* Method:    setNumberOfGridNodesInOneDimension
+* Signature: (I)V
+*/
+JNIEXPORT void JNICALL Java_com_neosoft_application_analysis_strain_function_engine_FxnStrainRegistrationJni_setNumberOfGridNodesInOneDimension
+(JNIEnv *env, jobject thisObj, jint jNumGridNodes) {
+
+	// Convert to C++ objects
+	int numGridNodes = (int)jNumGridNodes;
+
+	// Retrieve the registration instance held by the JAVA side JNI wrapper
+	BSplineImageRegistrationV4 *registration = getHandle<BSplineImageRegistrationV4>(env, thisObj);
+
+	// Set the number of grid nodes in on dimension
+	registration->SetNumberOfGridNodesInOneDimension(numGridNodes);
+}
+
+/*
+* Class:     com_neosoft_application_analysis_strain_function_engine_FxnStrainRegistrationJni
+* Method:    setOrigin
+* Signature: ([D)V
+*/
+JNIEXPORT void JNICALL Java_com_neosoft_application_analysis_strain_function_engine_FxnStrainRegistrationJni_setOrigin
+(JNIEnv *env, jobject thisObj, jdoubleArray jOrigin) {
+
+	// Convert to C++ objects
+	std::vector<double> originVector = ConvertJDoubleArrayToDoubleVector(env, jOrigin);
+
+	// Retrieve the registration instance held by the JAVA side JNI wrapper
+	BSplineImageRegistrationV4 *registration = getHandle<BSplineImageRegistrationV4>(env, thisObj);
+
+	// Set the origin
+	registration->SetOrigin(originVector);
+}
+
+/*
+* Class:     com_neosoft_application_analysis_strain_function_engine_FxnStrainRegistrationJni
+* Method:    setPixelSpacing
+* Signature: ([D)V
+*/
+JNIEXPORT void JNICALL Java_com_neosoft_application_analysis_strain_function_engine_FxnStrainRegistrationJni_setPixelSpacing
+(JNIEnv *env, jobject thisObj, jdoubleArray jPixelSpacing) {
+
+	// Convert to C++ objects
+	std::vector<double> pixelSpacingVector = ConvertJDoubleArrayToDoubleVector(env, jPixelSpacing);
+
+	// Retrieve the registration instance held by the JAVA side JNI wrapper
+	BSplineImageRegistrationV4 *registration = getHandle<BSplineImageRegistrationV4>(env, thisObj);
+
+	// Set the origin
+	registration->SetPixelSpacing(pixelSpacingVector);
+}
+
+/*
+* Class:     com_neosoft_application_analysis_strain_function_engine_FxnStrainRegistrationJni
+* Method:    getParameters
+* Signature: ()[D
+*/
+JNIEXPORT jdoubleArray JNICALL Java_com_neosoft_application_analysis_strain_function_engine_FxnStrainRegistrationJni_getParameters
+(JNIEnv *env, jobject thisObj) {
+
+	// Retrieve the registration instance held by the JAVA side JNI wrapper
+	BSplineImageRegistrationV4 *registration = getHandle<BSplineImageRegistrationV4>(env, thisObj);
+
+	// Get parameters
+	std::vector<double> parameterVector = registration->GetParameterVector();
+
+	// Convert to Java object
+	jdoubleArray jParameters = ConvertDoubleVectorToJDoubleArray(env, parameterVector);
+
+	return jParameters;
+}
+
+/*
+* Class:     com_neosoft_application_analysis_strain_function_engine_FxnStrainRegistrationJni
+* Method:    setParameters
+* Signature: ([D)V
+*/
+JNIEXPORT void JNICALL Java_com_neosoft_application_analysis_strain_function_engine_FxnStrainRegistrationJni_setParameters
+(JNIEnv *env, jobject thisObj, jdoubleArray jParameters) {
+
+	// Convert to C++ objects
+	std::vector<double> parameters = ConvertJDoubleArrayToDoubleVector(env, jParameters);
+
+	// Retrieve the registration instance held by the JAVA side JNI wrapper
+	BSplineImageRegistrationV4 *registration = getHandle<BSplineImageRegistrationV4>(env, thisObj);
+
+	// Add the fixed contour
+	registration->SetParameters(parameters);
+}
+
+/*
+* Class:     com_neosoft_application_analysis_strain_function_engine_FxnStrainRegistrationJni
+* Method:    transformPoints
+* Signature: ([D[D[D[D)V
+*/
+JNIEXPORT void JNICALL Java_com_neosoft_application_analysis_strain_function_engine_FxnStrainRegistrationJni_transformPoints
+(JNIEnv *env, jobject thisObj, jdoubleArray jInPointsX, jdoubleArray jInPointsY, jdoubleArray jOutPointsX, jdoubleArray jOutPointsY) {
+
+	// Convert to C++ objects
+	std::vector<double> inPointsX = ConvertJDoubleArrayToDoubleVector(env, jInPointsX);
+	std::vector<double> inPointsY = ConvertJDoubleArrayToDoubleVector(env, jInPointsY);
+	std::vector<double> outPointsX;
+	std::vector<double> outPointsY;
+
+	// Retrieve the registration instance held by the JAVA side JNI wrapper
+	BSplineImageRegistrationV4 *registration = getHandle<BSplineImageRegistrationV4>(env, thisObj);
+
+	// Transform points
+	registration->TransformPoints(inPointsX, inPointsY, outPointsX, outPointsY);
+
+	// Copy to Java objects
+	copyDoubleVectorToJDoubleArray(env, jOutPointsX, outPointsX);
+	copyDoubleVectorToJDoubleArray(env, jOutPointsY, outPointsY);
+}
+
+/*
+* Class:     com_neosoft_application_analysis_strain_function_engine_FxnStrainRegistrationJni
+* Method:    disposeJni
+* Signature: ()V
+*/
+JNIEXPORT void JNICALL Java_com_neosoft_application_analysis_strain_function_engine_FxnStrainRegistrationJni_disposeJni
+(JNIEnv *env, jobject thisObj) {
+	BSplineImageRegistrationV4 *registration = getHandle<BSplineImageRegistrationV4>(env, thisObj);
+	setHandle(env, thisObj, (BSplineImageRegistrationV4*)0);
+	delete registration;
+}
+
+#endif REGISTRATION_V4

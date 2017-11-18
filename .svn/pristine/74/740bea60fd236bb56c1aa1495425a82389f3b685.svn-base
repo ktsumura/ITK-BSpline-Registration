@@ -1,0 +1,121 @@
+//#include "NeoHandle.h"
+#include "NeoItkJniCommon.h"
+
+using namespace std;
+
+int * ConvertJIntArrayToIntPointer(JNIEnv * env, jintArray jArray) {
+
+	size_t length = (size_t)env->GetArrayLength(jArray);
+	jint *jPointer = env->GetIntArrayElements(jArray, 0);
+	int *pointer = new int[length];
+	memcpy(pointer, jPointer, length * sizeof(int));
+
+	return pointer;
+}
+
+unsigned int * ConvertJIntArrayToUnsignedIntPointer(JNIEnv * env, jintArray jArray) {
+
+	size_t length = (size_t)env->GetArrayLength(jArray);
+	jint *jPointer = env->GetIntArrayElements(jArray, 0);
+	unsigned int *pointer = new unsigned int[length];
+	memcpy(pointer, jPointer, length * sizeof(unsigned int));
+
+	return pointer;
+}
+
+float * ConvertJFloatArrayToFloatPointer(JNIEnv * env, jfloatArray jArray) {
+
+	size_t length = (size_t)env->GetArrayLength(jArray);
+	jfloat *jPointer = env->GetFloatArrayElements(jArray, 0);
+	float *pointer = new float[length];
+	memcpy(pointer, jPointer, length * sizeof(float));
+
+	return pointer;
+}
+
+double * ConvertJDoubleArrayToDoublePointer(JNIEnv * env, jdoubleArray jArray) {
+
+	size_t length = (size_t)env->GetArrayLength(jArray);
+	jdouble *jPointer = env->GetDoubleArrayElements(jArray, 0);
+	double *pointer = new double[length];
+	memcpy(pointer, jPointer, length * sizeof(double));
+
+	return pointer;
+}
+
+std::vector<float> ConvertJFloatArrayToFloatVector(JNIEnv * env, jfloatArray jArray) {
+
+	size_t length = (size_t)env->GetArrayLength(jArray);
+	jfloat *jPointer = env->GetFloatArrayElements(jArray, 0);
+	float *pointer = new float[length];
+	memcpy(pointer, jPointer, length * sizeof(float));
+
+	std::vector<float> vector(pointer, pointer + length);
+
+	return vector;
+}
+
+std::vector<double> ConvertJDoubleArrayToDoubleVector(JNIEnv * env, jdoubleArray jArray) {
+
+	size_t length = (size_t)env->GetArrayLength(jArray);
+	jdouble *jPointer = env->GetDoubleArrayElements(jArray, 0);
+	double *pointer = new double[length];
+	memcpy(pointer, jPointer, length * sizeof(double));
+
+	std::vector<double> vector(pointer, pointer + length);
+
+	return vector;
+}
+
+std::string ConvertJStringToString(JNIEnv * env, jstring jContourId) {
+	const char *pointer = env->GetStringUTFChars(jContourId, 0);
+	std::string string(pointer);
+
+	return string;
+}
+
+jfloatArray ConvertFloatPointerToJFloatArray(JNIEnv * env, float * pointer, unsigned int length) {
+
+	jfloatArray jArray = env->NewFloatArray((jsize)(length));
+	env->SetFloatArrayRegion(jArray, 0, (jsize)(length), pointer);
+
+	return jArray;
+}
+
+jfloatArray ConvertFloatVectorToJFloatArray(JNIEnv * env, std::vector<float> vector) {
+
+	size_t length = vector.size();
+	float * pointer = &vector[0];
+
+	return ConvertFloatPointerToJFloatArray(env, pointer, length);
+}
+
+jdoubleArray ConvertDoublePointerToJDoubleArray(JNIEnv * env, double * pointer, unsigned int length) {
+
+	jdoubleArray jArray = env->NewDoubleArray((jsize)(length));
+	env->SetDoubleArrayRegion(jArray, 0, (jsize)(length), pointer);
+
+	return jArray;
+}
+
+jdoubleArray ConvertDoubleVectorToJDoubleArray(JNIEnv * env, std::vector<double> vector) {
+
+	size_t length = vector.size();
+	double * pointer = &vector[0];
+
+	return ConvertDoublePointerToJDoubleArray(env, pointer, length);
+}
+
+void copyFloatVectorToJFloatArray(JNIEnv * env, jfloatArray jArray, std::vector<float> vector) {
+	size_t length = (size_t)env->GetArrayLength(jArray);
+	float * pointer = &vector[0];
+
+	env->SetFloatArrayRegion(jArray, 0, (jsize)(length), pointer);
+}
+
+void copyDoubleVectorToJDoubleArray(JNIEnv * env, jdoubleArray jArray, std::vector<double> vector) {
+	size_t length = (size_t)env->GetArrayLength(jArray);
+	double * pointer = &vector[0];
+
+	env->SetDoubleArrayRegion(jArray, 0, (jsize)(length), pointer);
+}

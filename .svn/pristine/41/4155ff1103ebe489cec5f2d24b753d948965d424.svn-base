@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 2.8)
+
+project(globalProject)
+
+# Here add project names
+add_subdirectory(FxnStrainRegistration)
